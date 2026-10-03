@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>智慧聲音館 Smart Audio Hall</title>
+  
+  <!-- YouTube Iframe API 載入 -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <style>
+    /* 原生 CSS 核心樣式 */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #0b0f19; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 140px; -webkit-tap-highlight-color: transparent; }
+    
+    .glass-panel {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    header { position: sticky; top: 0; z-index: 30; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+    .logo-box { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #8b5cf6); display: flex; align-items: center; justify-content: center; }
+    
+    main { flex: 1; max-width: 896px; width: 100%; margin: 0 auto; padding: 16px; }
+    
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .card { padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: border-color 0.2s; }
+    .card:hover { border-color: rgba(99, 102, 241, 0.4); }
+    .card-active { border-color: rgba(99, 102, 241, 0.8) !important; background: rgba(30, 27, 75, 0.4); }
+    
+    .btn { padding: 8px 16px; border-radius: 10px; border: none; background: #374151; color: white; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+    .btn:active { transform: scale(0.96); }
+
+    .icon-btn { background: none; border: none; color: #9ca3af; cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .icon-btn:hover { color: white; background: rgba(255, 255, 255, 0.05); }
+
+    /* 全域迷你播放器 */
+    #global-player-wrapper { position: fixed; bottom: 70px; left: 0; right: 0; z-index: 40; max-width: 896px; margin: 0 auto; padding: 0 12px; }
+    #mini-player { border-radius: 16px; padding: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+    
+    /* 底部導覽列 */
+    nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 30; border-top: 1px solid #1f2937; max-width: 896px; margin: 0 auto; }
+    .nav-grid { display: grid; grid-template-columns: repeat(4, 1fr); height: 64px; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; background: none; border: none; font-size: 11px; cursor: pointer; }
+    .nav-item.active { color: #818cf8; }
+
+    /* Modal */
+    .modal { position: fixed; inset: 0; z-index: 50; background: rgba(3, 7, 18, 0.95); backdrop-filter: blur(20px); display: flex; flex-direction: column; justify-content: space-between; padding: 24px; transition: opacity 0.3s; }
+    .hidden { display: none !important; }
+
+    input[type="text"] { width: 100%; padding: 10px 14px; background: #030712; border: 1px solid #374151; border-radius: 10px; color: white; font-size: 14px; outline: none; }
+    input[type="text"]:focus { border-color: #6366f1; }
+    
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部 Header -->
+  <header class="glass-panel">
+    <div class="logo-box">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"/></svg>
+      </div>
+      <div>
+        <h1 style="font-size: 16px; font-weight: bold; color: white;">智慧聲音館</h1>
+        <p style="font-size: 10px; color: #9ca3af; margin-top: -2px;">Smart Audio Hall</p>
+      </div>
+    </div>
+    
+    <button onclick="openApiKeyModal()" class="btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      API 設定
+    </button>
+  </header>
+
+  <!-- 主要內容顯示區域 -->
+  <main id="app-content">
+    <!-- 頁面內容動態渲染 -->
+  </main>
+
+  <!-- 隱藏式 YouTube API 播放容器 -->
+  <div id="youtube-player-container" style="position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none;">
+    <div id="yt-player"></div>
+  </div>
+
+  <!-- 迷你播放器 -->
+  <div id="global-player-wrapper">
+    <div id="mini-player" onclick="expandFullPlayer()" class="glass-panel">
+      <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
+        <img id="mini-cover" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&auto=format&fit=crop" style="width: 44px; height: 44px; border-radius: 10px; object-fit: cover;" alt="Cover">
+        <div class="truncate">
+          <p id="mini-title" style="font-size: 14px; font-weight: 600; color: white;" class="truncate">未在播放內容</p>
+          <p id="mini-artist" style="font-size: 12px; color: #9ca3af;" class="truncate">請選擇聲音內容試播</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation()">
+        <button id="mini-play-btn" onclick="togglePlayPause()" class="btn btn-primary" style="width: 38px; height: 38px; border-radius: 50%; padding: 0; justify-content: center;">
+          ►
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 完整播放器 Modal -->
+  <div id="full-player-modal" class="modal hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <button onclick="closeFullPlayer()" class="icon-btn">▼</button>
+      <span style="font-size: 11px; color: #9ca3af; letter-spacing: 2px;">智慧聲音館播放中</span>
+      <button onclick="toggleFavoriteCurrent()" id="full-fav-btn" class="icon-btn">♥</button>
+    </div>
+
+    <div style="margin: auto 0; text-align: center;">
+      <img id="full-cover" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop" style="width: 260px; height: 260px; border-radius: 20px; object-fit: cover; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <h2 id="full-title" style="font-size: 20px; font-weight: bold; color: white; margin-top: 20px;" class="truncate">標題</h2>
+      <p id="full-artist" style="font-size: 14px; color: #818cf8; margin-top: 4px;" class="truncate">作者</p>
+    </div>
+
+    <div style="max-width: 400px; width: 100%; margin: 0 auto;">
+      <input type="range" id="seek-bar" min="0" max="100" value="0" style="width: 100%; accent-color: #6366f1;" oninput="onSeek(this.value)">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #9ca3af; margin-top: 6px;">
+        <span id="curr-time">00:00</span>
+        <span id="total-time">00:00</span>
+      </div>
+
+      <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
+        <button onclick="playPrev()" class="icon-btn" style="font-size: 20px;">⏮</button>
+        <button id="full-play-btn" onclick="togglePlayPause()" class="btn btn-primary" style="width: 56px; height: 56px; border-radius: 50%; font-size: 20px; justify-content: center;">►</button>
+        <button onclick="playNext()" class="icon-btn" style="font-size: 20px;">⏭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部導覽列 -->
+  <nav class="glass-panel">
+    <div class="nav-grid">
+      <button onclick="switchTab('mandarin')" id="tab-mandarin" class="nav-item active">
+        <span style="font-size: 18px;">🎵</span>
+        <span>中文熱門</span>
+      </button>
+      <button onclick="switchTab('nature')" id="tab-nature" class="nav-item">
+        <span style="font-size: 18px;">🌧️</span>
+        <span>大自然</span>
+      </button>
+      <button onclick="switchTab('knowledge')" id="tab-knowledge" class="nav-item">
+        <span style="font-size: 18px;">🧠</span>
+        <span>智慧有聲</span>
+      </button>
+      <button onclick="switchTab('my')" id="tab-my" class="nav-item">
+        <span style="font-size: 18px;">❤️</span>
+        <span>我的歌曲</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- API Modal -->
+  <div id="api-modal" class="modal hidden" style="justify-content: center; align-items: center; background: rgba(0,0,0,0.8);">
+    <div style="background: #111827; border: 1px solid #374151; border-radius: 16px; padding: 24px; max-width: 360px; width: 100%;">
+      <h3 style="color: white; font-size: 16px; font-weight: bold;">API Key 設定</h3>
+      <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">輸入個人 YouTube Data API Key 可載入最新即時搜尋結果。</p>
+      <input type="text" id="api-key-input" placeholder="貼上 API Key" style="margin-top: 16px;">
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+        <button onclick="closeApiKeyModal()" class="btn">取消</button>
+        <button onclick="saveApiKey()" class="btn btn-primary">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 邏輯腳本 -->
+  <script>
+    const CONFIG = { API_KEY_STORAGE: 'sah_yt_api_key' };
+
+    let state = {
+      currentTab: 'mandarin',
+      playlist: [],
+      currentIndex: -1,
+      isPlaying: false,
+      favorites: JSON.parse(localStorage.getItem('sah_favs') || '[]'),
+      ytPlayer: null,
+      ytReady: false,
+      progressTimer: null
+    };
+
+    const FALLBACK_DATA = {
+      mandarin: [
+        { id: 'g04s_qJ7N2k', title: '晴天', artist: '周杰倫', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop' },
+        { id: '183-o5d4Yx4', title: '唯一', artist: '告五人', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&auto=format&fit=crop' },
+        { id: 'xRb8hLw-d3Q', title: '光年之外', artist: '鄧紫棋', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&auto=format&fit=crop' }
+      ],
+      nature: [
+        { id: 'mPZkdNFkN8A', title: '森林深處暴雨雷聲', artist: '大自然原聲', cover: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=300&auto=format&fit=crop' },
+        { id: '1p4o4d4pW04', title: '海浪拍打海岸', artist: '海洋廣播', cover: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop' }
+      ],
+      knowledge: [
+        { id: '7y33N1o-E38', title: '論語經典智慧解析', artist: '國學講座', cover: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=300&auto=format&fit=crop' }
+      ]
+    };
+
+    // YouTube API Ready 回呼
+    function onYouTubeIframeAPIReady() {
+      state.ytPlayer = new YT.Player('yt-player', {
+        height: '0',
+        width: '0',
+        events: {
+          'onReady': () => { state.ytReady = true; },
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.ENDED) {
+        playNext();
+      } else if (event.data === YT.PlayerState.PLAYING) {
+        state.isPlaying = true;
+        updateUIButtons(true);
+        startProgressTimer();
+      } else if (event.data === YT.PlayerState.PAUSED) {
+        state.isPlaying = false;
+        updateUIButtons(false);
+        stopProgressTimer();
+      }
+    }
+
+    function get30Tracks(category) {
+      let base = FALLBACK_DATA[category] || [];
+      let list = [];
+      for(let i = 0; i < 30; i++) {
+        let item = base[i % base.length];
+        list.push({
+          ...item,
+          id: `${item.id}_pad${i}`,
+          title: i < base.length ? item.title : `${item.title} (選集 ${i+1})`
+        });
+      }
+      return list;
+    }
+
+    function switchTab(tab) {
+      state.currentTab = tab;
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+
+      if (tab === 'my') renderMyTab();
+      else renderCategoryTab(tab);
+    }
+
+    function renderCategoryTab(cat) {
+      state.playlist = get30Tracks(cat);
+      const app = document.getElementById('app-content');
+      
+      let html = `<div style="margin-bottom: 16px;">
+        <h2 style="font-size: 18px; font-weight: bold; color: white;">首頁推薦 (TOP 30)</h2>
+        <button onclick="loadAndPlayTrack(0)" class="btn btn-primary" style="margin-top: 10px;">► 播放全部</button>
+      </div><div class="grid">`;
+
+      state.playlist.forEach((track, idx) => {
+        const isCurrent = state.currentIndex === idx;
+        html += `
+          <div class="card glass-panel ${isCurrent ? 'card-active' : ''}">
+            <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
+              <span style="font-weight:bold; color:#6b7280; font-size:12px;">${idx+1}</span>
+              <img src="${track.cover}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">
+              <div class="truncate">
+                <div style="font-size:13px; font-weight:600; color:white;" class="truncate">${escapeHtml(track.title)}</div>
+                <div style="font-size:11px; color:#9ca3af;" class="truncate">${escapeHtml(track.artist)}</div>
+              </div>
+            </div>
+            <button onclick="loadAndPlayTrack(${idx})" class="btn btn-primary" style="padding:6px 10px;">${isCurrent && state.isPlaying ? '❚❚' : '►'}</button>
+          </div>
+        `;
+      });
+      html += `</div>`;
+      app.innerHTML = html;
+    }
+
+    function renderMyTab() {
+      const app = document.getElementById('app-content');
+      let html = `
+        <div style="margin-bottom: 20px;">
+          <h2 style="font-size: 18px; font-weight: bold; color: white; margin-bottom: 10px;">❤ 我的收藏 (${state.favorites.length})</h2>
+        </div><div class="grid">`;
+
+      if(state.favorites.length === 0) {
+        html += `<p style="color:#6b7280; font-size:13px;">目前尚無收藏聲音檔</p>`;
+      } else {
+        state.favorites.forEach((track, idx) => {
+          html += `
+            <div class="card glass-panel">
+              <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
+                <img src="${track.cover}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">
+                <div class="truncate">
+                  <div style="font-size:13px; font-weight:600; color:white;" class="truncate">${escapeHtml(track.title)}</div>
+                  <div style="font-size:11px; color:#9ca3af;" class="truncate">${escapeHtml(track.artist)}</div>
+                </div>
+              </div>
+              <button onclick="playFav(${idx})" class="btn btn-primary" style="padding:6px 10px;">►</button>
+            </div>
+          `;
+        });
+      }
+      html += `</div>`;
+      app.innerHTML = html;
+    }
+
+    function loadAndPlayTrack(idx) {
+      if(idx < 0 || idx >= state.playlist.length) return;
+      state.currentIndex = idx;
+      const track = state.playlist[idx];
+
+      document.getElementById('mini-title').innerText = track.title;
+      document.getElementById('mini-artist').innerText = track.artist;
+      document.getElementById('mini-cover').src = track.cover;
+
+      document.getElementById('full-title').innerText = track.title;
+      document.getElementById('full-artist').innerText = track.artist;
+      document.getElementById('full-cover').src = track.cover;
+
+      // 解析真實 YouTube ID
+      const realYtId = track.id.split('_pad')[0];
+
+      if (state.ytReady && state.ytPlayer) {
+        state.ytPlayer.loadVideoById(realYtId);
+        state.isPlaying = true;
+        updateUIButtons(true);
+      } else {
+        alert('播放器正在初始化中，請稍微重試...');
+      }
+
+      if (state.currentTab !== 'my') renderCategoryTab(state.currentTab);
+    }
+
+    function togglePlayPause() {
+      if(state.currentIndex === -1 && state.playlist.length > 0) {
+        loadAndPlayTrack(0);
+        return;
+      }
+      if(!state.ytReady || !state.ytPlayer) return;
+
+      if(state.isPlaying) {
+        state.ytPlayer.pauseVideo();
+      } else {
+        state.ytPlayer.playVideo();
+      }
+    }
+
+    function updateUIButtons(playing) {
+      const btnText = playing ? '❚❚' : '►';
+      document.getElementById('mini-play-btn').innerText = btnText;
+      document.getElementById('full-play-btn').innerText = btnText;
+    }
+
+    function startProgressTimer() {
+      stopProgressTimer();
+      state.progressTimer = setInterval(() => {
+        if(state.ytPlayer && state.ytPlayer.getCurrentTime) {
+          const curr = state.ytPlayer.getCurrentTime() || 0;
+          const dur = state.ytPlayer.getDuration() || 0;
+          if(dur > 0) {
+            document.getElementById('seek-bar').value = (curr / dur) * 100;
+            document.getElementById('curr-time').innerText = formatTime(curr);
+            document.getElementById('total-time').innerText = formatTime(dur);
+          }
+        }
+      }, 1000);
+    }
+
+    function stopProgressTimer() {
+      if(state.progressTimer) clearInterval(state.progressTimer);
+    }
+
+    function onSeek(val) {
+      if(state.ytPlayer && state.ytPlayer.getDuration) {
+        const dur = state.ytPlayer.getDuration();
+        state.ytPlayer.seekTo((val / 100) * dur, true);
+      }
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function playNext() { loadAndPlayTrack((state.currentIndex + 1) % state.playlist.length); }
+    function playPrev() { loadAndPlayTrack((state.currentIndex - 1 + state.playlist.length) % state.playlist.length); }
+
+    function expandFullPlayer() { document.getElementById('full-player-modal').classList.remove('hidden'); }
+    function closeFullPlayer() { document.getElementById('full-player-modal').classList.add('hidden'); }
+
+    function openApiKeyModal() { document.getElementById('api-modal').classList.remove('hidden'); }
+    function closeApiKeyModal() { document.getElementById('api-modal').classList.add('hidden'); }
+    function saveApiKey() {
+      localStorage.setItem(CONFIG.API_KEY_STORAGE, document.getElementById('api-key-input').value.trim());
+      closeApiKeyModal();
+    }
+
+    function escapeHtml(str) { return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    window.onload = () => { switchTab('mandarin'); };
+  </script>
+</body>
+</html>
+
