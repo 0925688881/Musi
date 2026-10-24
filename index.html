@@ -1,410 +1,339 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>智慧聲音館 Smart Audio Hall</title>
-  
-  <!-- YouTube Iframe API 載入 -->
-  <script src="https://www.youtube.com/iframe_api"></script>
-
-  <style>
-    /* 原生 CSS 核心樣式 */
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: #0b0f19; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 140px; -webkit-tap-highlight-color: transparent; }
-    
-    .glass-panel {
-      background: rgba(17, 24, 39, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    
-    header { position: sticky; top: 0; z-index: 30; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
-    .logo-box { display: flex; align-items: center; gap: 10px; }
-    .logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #8b5cf6); display: flex; align-items: center; justify-content: center; }
-    
-    main { flex: 1; max-width: 896px; width: 100%; margin: 0 auto; padding: 16px; }
-    
-    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-
-    .card { padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: border-color 0.2s; }
-    .card:hover { border-color: rgba(99, 102, 241, 0.4); }
-    .card-active { border-color: rgba(99, 102, 241, 0.8) !important; background: rgba(30, 27, 75, 0.4); }
-    
-    .btn { padding: 8px 16px; border-radius: 10px; border: none; background: #374151; color: white; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-primary { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
-    .btn:active { transform: scale(0.96); }
-
-    .icon-btn { background: none; border: none; color: #9ca3af; cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-    .icon-btn:hover { color: white; background: rgba(255, 255, 255, 0.05); }
-
-    /* 全域迷你播放器 */
-    #global-player-wrapper { position: fixed; bottom: 70px; left: 0; right: 0; z-index: 40; max-width: 896px; margin: 0 auto; padding: 0 12px; }
-    #mini-player { border-radius: 16px; padding: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
-    
-    /* 底部導覽列 */
-    nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 30; border-top: 1px solid #1f2937; max-width: 896px; margin: 0 auto; }
-    .nav-grid { display: grid; grid-template-columns: repeat(4, 1fr); height: 64px; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; background: none; border: none; font-size: 11px; cursor: pointer; }
-    .nav-item.active { color: #818cf8; }
-
-    /* Modal */
-    .modal { position: fixed; inset: 0; z-index: 50; background: rgba(3, 7, 18, 0.95); backdrop-filter: blur(20px); display: flex; flex-direction: column; justify-content: space-between; padding: 24px; transition: opacity 0.3s; }
-    .hidden { display: none !important; }
-
-    input[type="text"] { width: 100%; padding: 10px 14px; background: #030712; border: 1px solid #374151; border-radius: 10px; color: white; font-size: 14px; outline: none; }
-    input[type="text"]:focus { border-color: #6366f1; }
-    
-    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  </style>
-</head>
+<html lang="zh-TW"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CYBER-READER 賽博智閱</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jschardet@3.0.0/dist/jschardet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#070a11;--card:#1e293b;--bd:#334155;--cy:#00f0ff;--mg:#ff0055;--tx:#f8fafc;--mu:#94a3b8;--gr:#10b981;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font-family:'Noto Sans TC',system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+button,.btn{font:inherit;cursor:pointer;color:var(--cy);background:rgba(0,240,255,.1);border:1px solid rgba(0,240,255,.45);border-radius:10px;padding:7px 12px;font-size:13px}
+button:hover,.btn:hover{background:rgba(0,240,255,.22)}button:disabled{opacity:.3;cursor:not-allowed}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:rgba(15,23,42,.95);border-bottom:1px solid var(--bd)}
+.logo{font-weight:700;letter-spacing:2px;background:linear-gradient(90deg,var(--cy),#fff,#6366f1);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hide{display:none!important}.row{display:flex;gap:8px;align-items:center}
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+#lib{flex:1;overflow:auto;padding:16px;max-width:1100px;width:100%;margin:auto}
+.panel{background:rgba(30,41,59,.85);border:1px solid rgba(0,240,255,.25);border-radius:16px}
+#drop{padding:18px;text-align:center;border:2px dashed rgba(0,240,255,.4);border-radius:14px;cursor:pointer;margin-bottom:14px;color:var(--mu);font-size:13px}
+#drop.over{border-color:var(--cy);background:rgba(0,240,255,.08)}
+input[type=text]{background:var(--bg);border:1px solid var(--bd);border-radius:10px;color:var(--tx);padding:8px 12px;font:inherit;font-size:13px;width:100%}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:12px}
+.card{padding:12px;display:flex;flex-direction:column;gap:8px}
+.cover{height:110px;border-radius:10px;cursor:pointer;padding:8px;display:flex;justify-content:flex-end;align-items:flex-start;background:linear-gradient(135deg,var(--g1),var(--g2))}
+.tag{font-size:10px;background:#000b;color:var(--cy);padding:2px 6px;border-radius:5px;border:1px solid rgba(0,240,255,.3)}
+.ttl{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.bar{height:5px;background:var(--bg);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cy),var(--gr))}
+.mini{padding:3px 8px;font-size:12px}.del.arm{color:var(--mg);border-color:var(--mg)}
+#rd{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+#scroll{flex:1;overflow:auto;padding:12px}
+#page{max-width:760px;margin:auto;padding:20px 18px;min-height:100%}
+.st{display:flex;justify-content:space-between;font-size:12px;color:var(--mu);border-bottom:1px solid var(--bd);padding-bottom:10px;margin-bottom:10px}
+.ln{padding:6px 10px;margin:3px 0;border-radius:6px;border-left:3px solid transparent;cursor:pointer;line-height:1.85;font-size:34px;word-break:break-word}
+.ln:hover{background:rgba(0,240,255,.07);border-left-color:rgba(0,240,255,.5)}
+.ln p,.ln h1,.ln h2,.ln h3{margin:0}.ln h1{font-size:46px;color:var(--cy)}.ln h2,.ln h3{font-size:38px}
+.ln.mk{background:rgba(16,185,129,.2);border-left-color:var(--gr);font-size:29px;color:var(--mu)}
+.im{max-width:100%;height:auto;display:block;margin:8px auto;border-radius:8px;border:1px solid rgba(0,240,255,.3);cursor:zoom-in}
+.tw{overflow-x:auto}table{border-collapse:collapse;font-size:13px}td{border:1px solid var(--bd);padding:8px 14px;white-space:nowrap;font-size:26px}
+footer{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(15,23,42,.95);border-top:1px solid var(--bd)}
+#toc{position:absolute;top:0;right:0;bottom:0;width:300px;max-width:85vw;z-index:5;transform:translateX(100%);transition:transform .25s;overflow:auto;padding:12px;border-radius:0}
+#toc.open{transform:none}#toc button{display:block;width:100%;text-align:left;margin:4px 0;color:var(--tx);border-color:var(--bd);background:none}
+#toasts{position:fixed;top:60px;right:12px;z-index:50;display:flex;flex-direction:column;gap:6px}
+.toast{background:var(--card);border:1px solid rgba(0,240,255,.5);border-radius:10px;padding:9px 13px;font-size:12px;max-width:80vw}
+#load,#lb{position:fixed;inset:0;background:#000d;z-index:40;display:flex;align-items:center;justify-content:center;color:var(--cy);font-size:14px;padding:20px;text-align:center}
+#lb img{max-width:92vw;max-height:88vh;border-radius:10px}
+</style></head>
 <body>
+<div id="toasts"></div>
+<header>
+  <div class="row"><button id="home" class="hide">⌂ 首頁</button><span class="logo">CYBER.READ 賽博智閱</span></div>
+  <div class="row"><label class="btn">＋ 匯入<input id="file" type="file" multiple hidden accept=".txt,.md,.rtf,.html,.htm,.epub,.docx,.pdf,.xlsx,.pptx,.odt"></label><button id="tocBtn" class="hide">☰ 目錄</button></div>
+</header>
+<main>
+  <section id="lib">
+    <div id="drop">點擊或拖曳檔案匯入（EPUB、TXT、PDF、DOCX、MD、HTML、RTF、XLSX、PPTX、ODT）</div>
+    <div class="row"><input id="q" type="text" placeholder="搜尋書名…"><span id="cnt" style="white-space:nowrap;font-size:12px;color:var(--mu)"></span></div>
+    <div id="grid"></div>
+  </section>
+  <section id="rd" class="hide">
+    <div id="toc" class="panel"></div>
+    <div id="scroll"><div id="page" class="panel">
+      <div class="st"><span id="chap" style="color:var(--cy)"></span><span id="pinfo"></span></div>
+      <div id="content"></div>
+      <div class="st" style="margin:18px 0 0;border:0">點擊任一行＝標記已讀（縮小＋底色）<span id="pct"></span></div>
+    </div></div>
+    <footer><button id="prev">‹ 上一頁</button><span id="pnum" style="color:var(--cy);font-size:13px"></span><button id="next">下一頁 ›</button></footer>
+  </section>
+</main>
+<div id="load" class="hide"></div>
+<div id="lb" class="hide"><img id="lbi" alt=""></div>
+<script>
+const PAGE=26,DBN='CyberReaderDB_V7',ST='books',MK='CYBER_READER_META_V7',LK='CYBER_READER_LAST_V7';
+let db=null,books=[],cur=null,pg=0;const stored=new Set();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;$('toasts').appendChild(d);setTimeout(()=>d.remove(),8000)}
+const lget=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+const lset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 
-  <!-- 頂部 Header -->
-  <header class="glass-panel">
-    <div class="logo-box">
-      <div class="logo-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"/></svg>
-      </div>
-      <div>
-        <h1 style="font-size: 16px; font-weight: bold; color: white;">智慧聲音館</h1>
-        <p style="font-size: 10px; color: #9ca3af; margin-top: -2px;">Smart Audio Hall</p>
-      </div>
-    </div>
-    
-    <button onclick="openApiKeyModal()" class="btn">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-      API 設定
-    </button>
-  </header>
+/* ---------- 儲存：書本內容→IndexedDB；書名/進度/劃記→localStorage（雙保險） ---------- */
+function openDB(){return new Promise(r=>{try{const q=indexedDB.open(DBN,1);q.onupgradeneeded=e=>e.target.result.createObjectStore(ST,{keyPath:'id'});q.onsuccess=e=>{db=e.target.result;r()};q.onerror=()=>r()}catch(e){r()}})}
+const tx=(m,f)=>new Promise(r=>{if(!db)return r(null);try{const t=db.transaction(ST,m);const q=f(t.objectStore(ST));t.oncomplete=()=>r(q&&q.result);t.onerror=t.onabort=()=>r(null)}catch(e){r(null)}});
+const putBook=b=>{const{lines,chapters,...x}=b;return tx('readwrite',s=>s.put(x))};
+function saveMeta(b){const m=lget(MK)||{};m[b.id]={title:b.title,page:b.page||0,marks:b.marks||{}};lset(MK,m)}
+async function save(b){saveMeta(b);if(!stored.has(b.id)){stored.add(b.id);await putBook(b)}}
 
-  <!-- 主要內容顯示區域 -->
-  <main id="app-content">
-    <!-- 頁面內容動態渲染 -->
-  </main>
+/* ---------- 簡→繁（OpenCC 完整字詞庫，不會誤傷原本的繁體字） ---------- */
+let cc=null;
+function s2t(t){if(!t)return'';try{if(!cc&&window.OpenCC)cc=OpenCC.Converter({from:'cn',to:'tw'});if(cc)return cc(t)}catch(e){}return t}
+async function s2tAsync(t){const ls=t.split('\n'),o=[];let buf=[],n=0;
+  for(const l of ls){buf.push(l);n+=l.length;if(n>20000){o.push(s2t(buf.join('\n')));buf=[];n=0;showLoad(`轉換繁體中文… ${Math.round(o.length*20000/Math.max(t.length,1)*100)}%`);await new Promise(r=>setTimeout(r))}}
+  if(buf.length)o.push(s2t(buf.join('\n')));return o.join('\n')}
 
-  <!-- 隱藏式 YouTube API 播放容器 -->
-  <div id="youtube-player-container" style="position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none;">
-    <div id="yt-player"></div>
-  </div>
+/* ---------- 編碼偵測：先嚴格 UTF-8，再宣告/偵測，再 Big5/GB18030 ---------- */
+function decodeBytes(u){
+  if(!u||!u.length)return'';
+  if(u[0]===0xEF&&u[1]===0xBB&&u[2]===0xBF)return new TextDecoder('utf-8').decode(u.subarray(3));
+  if(u[0]===0xFF&&u[1]===0xFE)return new TextDecoder('utf-16le').decode(u.subarray(2));
+  if(u[0]===0xFE&&u[1]===0xFF)return new TextDecoder('utf-16be').decode(u.subarray(2));
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(u)}catch(e){}
+  const c=[],m=new TextDecoder('latin1').decode(u.subarray(0,2000)).match(/(?:charset|encoding)\s*=\s*["']?([\w-]+)/i);
+  if(m)c.push(m[1].toLowerCase());
+  if(window.jschardet){try{let s='';const n=Math.min(u.length,20000);for(let i=0;i<n;i++)s+=String.fromCharCode(u[i]);const d=jschardet.detect(s);if(d&&d.encoding&&d.confidence>.5)c.push(d.encoding.toLowerCase())}catch(e){}}
+  c.push('big5','gb18030');
+  for(let e of c){if(/^(gb2312|gbk)$/.test(e))e='gb18030';if(e==='ascii'||e==='utf-8')continue;try{return new TextDecoder(e,{fatal:true}).decode(u)}catch(x){}}
+  return new TextDecoder('utf-8').decode(u);
+}
+const readText=async f=>decodeBytes(new Uint8Array(await f.arrayBuffer()));
 
-  <!-- 迷你播放器 -->
-  <div id="global-player-wrapper">
-    <div id="mini-player" onclick="expandFullPlayer()" class="glass-panel">
-      <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
-        <img id="mini-cover" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&auto=format&fit=crop" style="width: 44px; height: 44px; border-radius: 10px; object-fit: cover;" alt="Cover">
-        <div class="truncate">
-          <p id="mini-title" style="font-size: 14px; font-weight: 600; color: white;" class="truncate">未在播放內容</p>
-          <p id="mini-artist" style="font-size: 12px; color: #9ca3af;" class="truncate">請選擇聲音內容試播</p>
-        </div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation()">
-        <button id="mini-play-btn" onclick="togglePlayPause()" class="btn btn-primary" style="width: 38px; height: 38px; border-radius: 50%; padding: 0; justify-content: center;">
-          ►
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 完整播放器 Modal -->
-  <div id="full-player-modal" class="modal hidden">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <button onclick="closeFullPlayer()" class="icon-btn">▼</button>
-      <span style="font-size: 11px; color: #9ca3af; letter-spacing: 2px;">智慧聲音館播放中</span>
-      <button onclick="toggleFavoriteCurrent()" id="full-fav-btn" class="icon-btn">♥</button>
-    </div>
-
-    <div style="margin: auto 0; text-align: center;">
-      <img id="full-cover" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop" style="width: 260px; height: 260px; border-radius: 20px; object-fit: cover; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-      <h2 id="full-title" style="font-size: 20px; font-weight: bold; color: white; margin-top: 20px;" class="truncate">標題</h2>
-      <p id="full-artist" style="font-size: 14px; color: #818cf8; margin-top: 4px;" class="truncate">作者</p>
-    </div>
-
-    <div style="max-width: 400px; width: 100%; margin: 0 auto;">
-      <input type="range" id="seek-bar" min="0" max="100" value="0" style="width: 100%; accent-color: #6366f1;" oninput="onSeek(this.value)">
-      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #9ca3af; margin-top: 6px;">
-        <span id="curr-time">00:00</span>
-        <span id="total-time">00:00</span>
-      </div>
-
-      <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
-        <button onclick="playPrev()" class="icon-btn" style="font-size: 20px;">⏮</button>
-        <button id="full-play-btn" onclick="togglePlayPause()" class="btn btn-primary" style="width: 56px; height: 56px; border-radius: 50%; font-size: 20px; justify-content: center;">►</button>
-        <button onclick="playNext()" class="icon-btn" style="font-size: 20px;">⏭</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 底部導覽列 -->
-  <nav class="glass-panel">
-    <div class="nav-grid">
-      <button onclick="switchTab('mandarin')" id="tab-mandarin" class="nav-item active">
-        <span style="font-size: 18px;">🎵</span>
-        <span>中文熱門</span>
-      </button>
-      <button onclick="switchTab('nature')" id="tab-nature" class="nav-item">
-        <span style="font-size: 18px;">🌧️</span>
-        <span>大自然</span>
-      </button>
-      <button onclick="switchTab('knowledge')" id="tab-knowledge" class="nav-item">
-        <span style="font-size: 18px;">🧠</span>
-        <span>智慧有聲</span>
-      </button>
-      <button onclick="switchTab('my')" id="tab-my" class="nav-item">
-        <span style="font-size: 18px;">❤️</span>
-        <span>我的歌曲</span>
-      </button>
-    </div>
-  </nav>
-
-  <!-- API Modal -->
-  <div id="api-modal" class="modal hidden" style="justify-content: center; align-items: center; background: rgba(0,0,0,0.8);">
-    <div style="background: #111827; border: 1px solid #374151; border-radius: 16px; padding: 24px; max-width: 360px; width: 100%;">
-      <h3 style="color: white; font-size: 16px; font-weight: bold;">API Key 設定</h3>
-      <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">輸入個人 YouTube Data API Key 可載入最新即時搜尋結果。</p>
-      <input type="text" id="api-key-input" placeholder="貼上 API Key" style="margin-top: 16px;">
-      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
-        <button onclick="closeApiKeyModal()" class="btn">取消</button>
-        <button onclick="saveApiKey()" class="btn btn-primary">儲存</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 邏輯腳本 -->
-  <script>
-    const CONFIG = { API_KEY_STORAGE: 'sah_yt_api_key' };
-
-    let state = {
-      currentTab: 'mandarin',
-      playlist: [],
-      currentIndex: -1,
-      isPlaying: false,
-      favorites: JSON.parse(localStorage.getItem('sah_favs') || '[]'),
-      ytPlayer: null,
-      ytReady: false,
-      progressTimer: null
-    };
-
-    const FALLBACK_DATA = {
-      mandarin: [
-        { id: 'g04s_qJ7N2k', title: '晴天', artist: '周杰倫', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop' },
-        { id: '183-o5d4Yx4', title: '唯一', artist: '告五人', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&auto=format&fit=crop' },
-        { id: 'xRb8hLw-d3Q', title: '光年之外', artist: '鄧紫棋', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&auto=format&fit=crop' }
-      ],
-      nature: [
-        { id: 'mPZkdNFkN8A', title: '森林深處暴雨雷聲', artist: '大自然原聲', cover: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=300&auto=format&fit=crop' },
-        { id: '1p4o4d4pW04', title: '海浪拍打海岸', artist: '海洋廣播', cover: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop' }
-      ],
-      knowledge: [
-        { id: '7y33N1o-E38', title: '論語經典智慧解析', artist: '國學講座', cover: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=300&auto=format&fit=crop' }
-      ]
-    };
-
-    // YouTube API Ready 回呼
-    function onYouTubeIframeAPIReady() {
-      state.ytPlayer = new YT.Player('yt-player', {
-        height: '0',
-        width: '0',
-        events: {
-          'onReady': () => { state.ytReady = true; },
-          'onStateChange': onPlayerStateChange
-        }
-      });
+/* ---------- HTML → 行文字（保留標題、表格、圖片，依順序，不重複） ---------- */
+const BLK='p,div,li,h1,h2,h3,h4,h5,h6,blockquote,section,article,ul,ol,table,tr,pre,figure';
+async function htmlToText(doc,resolve,store){
+  let out='';
+  const img=async src=>{if(!src)return;const d=src.startsWith('data:')?src:(resolve?await resolve(src):null);if(d){const k='img'+Object.keys(store).length;store[k]=d;out+=`[IMG:${k}]\n`}};
+  const txt=n=>n.textContent.trim().replace(/\s+/g,' ');
+  async function walk(el){
+    for(const c of el.children){
+      const t=c.tagName.toLowerCase();
+      if(t==='script'||t==='style'||t==='head')continue;
+      if(t==='img'){await img(c.getAttribute('src'));continue}
+      if(t==='svg'){for(const i of c.querySelectorAll('image'))await img(i.getAttribute('xlink:href')||i.getAttribute('href'));continue}
+      if(t==='tr'){const r=[...c.children].map(txt);if(r.join(''))out+='[TBL]'+r.join('\t')+'\n';continue}
+      if(/^h[1-6]$/.test(t)){const x=txt(c);if(x)out+='# '+x+'\n';for(const i of c.querySelectorAll('img'))await img(i.getAttribute('src'));continue}
+      if(c.querySelector(BLK+',img,svg')){const own=[...c.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim();if(own)out+=own+'\n';await walk(c)}
+      else{const x=txt(c);if(x)out+=x+'\n'}
     }
+  }
+  if(doc.body)await walk(doc.body);
+  if(!out.trim()&&doc.body){const x=doc.body.textContent.replace(/[ \t\u00a0]+/g,' ').replace(/\s*\n\s*/g,'\n').trim();if(x)out+=x+'\n'}
+  return out;
+}
 
-    function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.ENDED) {
-        playNext();
-      } else if (event.data === YT.PlayerState.PLAYING) {
-        state.isPlaying = true;
-        updateUIButtons(true);
-        startProgressTimer();
-      } else if (event.data === YT.PlayerState.PAUSED) {
-        state.isPlaying = false;
-        updateUIButtons(false);
-        stopProgressTimer();
-      }
-    }
+/* ---------- 各格式解析器 ---------- */
+const MIME={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',svg:'image/svg+xml',bmp:'image/bmp'};
+const zpath=(h,base)=>{const p=new URL(h,'http://x/'+base).pathname.slice(1);try{return decodeURIComponent(p)}catch(e){return p}};
+const zres=(zip,base)=>async src=>{try{const p=zpath(src,base),nm=zip._n||(zip._n=Object.fromEntries(Object.keys(zip.files).map(k=>[k.toLowerCase(),k]))),f=zip.file(p)||zip.file(nm[p.toLowerCase()]);if(!f)return null;return`data:${MIME[p.split('.').pop().toLowerCase()]||'image/jpeg'};base64,`+await f.async('base64')}catch(e){return null}};
+const xml=async(zip,p)=>new DOMParser().parseFromString(decodeBytes(await zip.file(p).async('uint8array')),'text/xml');
 
-    function get30Tracks(category) {
-      let base = FALLBACK_DATA[category] || [];
-      let list = [];
-      for(let i = 0; i < 30; i++) {
-        let item = base[i % base.length];
-        list.push({
-          ...item,
-          id: `${item.id}_pad${i}`,
-          title: i < base.length ? item.title : `${item.title} (選集 ${i+1})`
-        });
-      }
-      return list;
-    }
+async function parseEpub(file,store){
+  window._st='EPUB：開啟壓縮檔';const zip=await JSZip.loadAsync(file);window._st='EPUB：讀取目錄';let opf='';
+  if(zip.file('META-INF/container.xml')){const r=(await xml(zip,'META-INF/container.xml')).getElementsByTagNameNS('*','rootfile')[0];if(r)opf=r.getAttribute('full-path')}
+  if(!opf)opf=Object.keys(zip.files).find(f=>f.endsWith('.opf'))||'';
+  let files=[];
+  if(opf&&zip.file(opf)){const d=await xml(zip,opf),man={};
+    [...d.getElementsByTagNameNS('*','item')].forEach(i=>man[i.getAttribute('id')]=i.getAttribute('href'));
+    [...d.getElementsByTagNameNS('*','itemref')].forEach(r=>{const h=man[r.getAttribute('idref')];if(h)files.push(zpath(h,opf))})}
+  if(!files.length)files=Object.keys(zip.files).filter(f=>/\.x?html?$/i.test(f)).sort();
+  const names={};const errs=[];let snip='';Object.keys(zip.files).forEach(k=>names[k.toLowerCase()]=k);
+  const readAll=async list=>{let o='',n=0;
+    for(const f of list){n++;if(n%4===0){showLoad(`解析章節 ${n}/${list.length}…`);await new Promise(r=>setTimeout(r))}
+      try{let e=zip.file(f)||zip.file(names[f.toLowerCase()])||zip.file(names[decodeURIComponent(f).toLowerCase()]);if(!e)continue;
+        const doc=new DOMParser().parseFromString(decodeBytes(await e.async('uint8array')),'text/html');
+        if(!snip&&doc.body)snip=doc.body.innerHTML.slice(0,250);o+=await htmlToText(doc,zres(zip,f),store)+'\n'}catch(x){errs.push(String(x&&x.message||x))}}
+    return o};
+  window._st='EPUB：讀取章節（'+files.length+' 個）';let out=await readAll(files);
+  if(!out.trim())out=await readAll(Object.keys(zip.files).filter(f=>/\.x?html?$/i.test(f)).sort());
+  if(!out.trim())out=await readAll(Object.keys(zip.files).filter(f=>!zip.files[f].dir&&/\.(xml|txt)$/i.test(f)&&!/(container|\.opf|\.ncx|encryption|metadata|rights|mimetype)/i.test(f)).sort());
+  if(!out.trim()&&!Object.keys(store).length){const im=Object.keys(zip.files).filter(f=>/\.(jpe?g|png|gif|webp)$/i.test(f)).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    for(let i=0;i<im.length;i++){if(i%5===0){showLoad(`讀取圖片頁 ${i+1}/${im.length}…`);await new Promise(r=>setTimeout(r))}
+      const f=im[i],k='img'+Object.keys(store).length;store[k]=`data:${MIME[f.split('.').pop().toLowerCase()]||'image/jpeg'};base64,`+await zip.file(f).async('base64');out+=`[IMG:${k}]\n`}}
+  if(!out.trim()&&Object.keys(store).length===0)throw new Error(`EPUB 內共 ${Object.keys(zip.files).length} 個檔案但讀不到文字（目錄章節 ${files.length} 個；檔案例：${Object.keys(zip.files).slice(0,8).join(' | ')}；錯誤：${errs[0]||'無'}；首章內容：${snip||'空'}）${zip.file('META-INF/encryption.xml')?'（含 encryption.xml，可能有 DRM 或字型混淆加密）':''}`);
+  return out;
+}
+async function parseDocx(file,store){
+  const r=await mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()},{convertImage:mammoth.images.imgElement(async i=>({src:`data:${i.contentType};base64,`+await i.read('base64')}))});
+  return htmlToText(new DOMParser().parseFromString(r.value,'text/html'),null,store);
+}
+async function parsePdf(file,store){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  if(!window.pdfjsLib)throw new Error('PDF 解析元件未載入，請檢查網路後重新整理');
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false,useWorkerFetch:false,disableFontFace:false}).promise;let t='';
+  for(let i=1;i<=pdf.numPages;i++){
+    const p=await pdf.getPage(i),c=await p.getTextContent();let y=null,line='',body='';
+    for(const it of c.items){if(it.str===undefined)continue;const yy=Math.round(it.transform[5]);
+      if(y!==null&&Math.abs(yy-y)>3){if(line.trim())body+=line.trim()+'\n';line=''}y=yy;line+=it.str}
+    if(line.trim())body+=line.trim()+'\n';
+    t+=`# 第 ${i} 頁\n`;
+    if(body.trim())t+=body+'\n';
+    else{const vp=p.getViewport({scale:1.3}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+      await p.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      const k='img'+Object.keys(store).length;store[k]=cv.toDataURL('image/jpeg',.7);t+=`[IMG:${k}]\n`}
+  }
+  return t;
+}
+async function parseXlsx(file){
+  const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});let t='';
+  wb.SheetNames.forEach(n=>{t+=`# 工作表: ${n}\n`;XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}).forEach(r=>{if(r.join('').trim())t+='[TBL]'+r.join('\t')+'\n'})});
+  return t;
+}
+async function parsePptx(file,store){
+  const zip=await JSZip.loadAsync(file);let t='';
+  const slides=Object.keys(zip.files).filter(f=>/^ppt\/slides\/slide\d+\.xml$/i.test(f)).sort((a,b)=>parseInt(a.match(/\d+/g).pop())-parseInt(b.match(/\d+/g).pop()));
+  for(let i=0;i<slides.length;i++){t+=`# 簡報頁面 ${i+1}\n`;const d=await xml(zip,slides[i]);
+    for(const p of d.getElementsByTagName('a:p')){const s=[...p.getElementsByTagName('a:t')].map(x=>x.textContent).join('');if(s.trim())t+=s+'\n'}
+    const rel=slides[i].replace('slides/','slides/_rels/')+'.rels';
+    if(zip.file(rel)){const r=await xml(zip,rel);for(const e of r.getElementsByTagName('Relationship')){const tg=e.getAttribute('Target');
+      if(/media\//.test(tg)){const d2=await zres(zip,slides[i])(tg);if(d2){const k='img'+Object.keys(store).length;store[k]=d2;t+=`[IMG:${k}]\n`}}}}}
+  return t;
+}
+async function parseOdt(file,store){
+  const zip=await JSZip.loadAsync(file);if(!zip.file('content.xml'))return'';
+  const d=await xml(zip,'content.xml');let t='';
+  for(const p of d.getElementsByTagName('text:p')){const s=p.textContent.trim();if(s)t+=s+'\n';
+    for(const im of p.getElementsByTagName('draw:image')){const h=im.getAttribute('xlink:href');const d2=h&&await zres(zip,'content.xml')(h);if(d2){const k='img'+Object.keys(store).length;store[k]=d2;t+=`[IMG:${k}]\n`}}}
+  return t;
+}
+function rtfText(s){
+  return s.replace(/\\u(-?\d+)(?:\\'[0-9a-f]{2}|\?)?/gi,(m,n)=>String.fromCharCode(n<0?+n+65536:+n))
+    .replace(/\{\\\*[^{}]*\}/g,'').replace(/\\par[d]?/g,'\n').replace(/\\'[0-9a-f]{2}/gi,'').replace(/\\[a-z]+-?\d* ?/gi,'').replace(/[{}]/g,'');
+}
 
-    function switchTab(tab) {
-      state.currentTab = tab;
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      document.getElementById(`tab-${tab}`).classList.add('active');
+/* ---------- 匯入 ---------- */
+function showLoad(t){$('load').textContent=t;$('load').classList.remove('hide')}
+const hideLoad=()=>$('load').classList.add('hide');
+async function importFile(file){
+  showLoad(`正在解析《${file.name}》…`);
+  const ext=file.name.split('.').pop().toLowerCase(),store={};let raw='';
+  try{window._st='解析檔案內容';
+    if(ext==='epub')raw=await parseEpub(file,store);
+    else if(ext==='docx')raw=await parseDocx(file,store);
+    else if(ext==='pdf')raw=await parsePdf(file,store);
+    else if(ext==='xlsx')raw=await parseXlsx(file);
+    else if(ext==='pptx')raw=await parsePptx(file,store);
+    else if(ext==='odt')raw=await parseOdt(file,store);
+    else if(ext==='html'||ext==='htm')raw=await htmlToText(new DOMParser().parseFromString(await readText(file),'text/html'),null,store);
+    else if(ext==='rtf')raw=rtfText(await readText(file));
+    else if(['doc','azw3','mobi','azw'].includes(ext))throw new Error(`.${ext} 為封閉二進位格式，請先轉成 EPUB 或 DOCX 再匯入`);
+    else raw=await readText(file);
+    if(!raw.trim())raw='（此檔案沒有可讀取的文字）';
+    window._st='簡轉繁（'+raw.length+' 字）';showLoad('正在轉換為繁體中文…');const traw=await s2tAsync(raw);
+    const gs=[['#00f0ff','#6366f1'],['#9333ea','#312e81'],['#10b981','#134e4a'],['#e11d48','#0f172a'],['#6366f1','#ff0055']][Math.floor(Math.random()*5)];
+    const b={id:'book-'+Date.now()+Math.floor(Math.random()*1e3),title:s2t(file.name.replace(/\.[^.]+$/,'')),format:ext.toUpperCase(),g1:gs[0],g2:gs[1],page:0,marks:{},raw:traw,images:store};
+    window._st='整理行文字';parseLines(b);books.unshift(b);window._st='寫入書架';try{await save(b)}catch(se){console.warn(se)}hideLoad();
+    toast(`《${b.title}》匯入完成${Object.keys(store).length?`（含 ${Object.keys(store).length} 張圖片）`:''}`);
+    if(!db)toast('提醒：此環境無法永久儲存，重新整理後書籍會消失');
+    window._st='開啟閱讀器';openBook(b.id,0);
+  }catch(e){console.error(e);showLoad(`匯入失敗（${file.name}）\n階段：${window._st}\n原因：${e&&e.message||e}\n${((e&&e.stack)||'').split('\n').slice(0,3).join('\n')}\n\n（點一下關閉）`);$('load').style.whiteSpace='pre-wrap';$('load').onclick=()=>{hideLoad();$('load').style.whiteSpace=''}}
+}
 
-      if (tab === 'my') renderMyTab();
-      else renderCategoryTab(tab);
-    }
+function parseLines(b){
+  const L=[],C=[];
+  (b.raw||'').split(/\r?\n/).forEach(l=>{l=l.trim();if(!l)return;
+    if(/^#+\s/.test(l)||/^第[一二三四五六七八九十百零0-9]+[章節卷部回]/.test(l)||/^Chapter\s+\d+/i.test(l))C.push({t:l.replace(/^#+\s*/,''),i:L.length});
+    L.push(l)});
+  b.lines=L.length?L:['（內容為空）'];b.chapters=C;
+}
 
-    function renderCategoryTab(cat) {
-      state.playlist = get30Tracks(cat);
-      const app = document.getElementById('app-content');
-      
-      let html = `<div style="margin-bottom: 16px;">
-        <h2 style="font-size: 18px; font-weight: bold; color: white;">首頁推薦 (TOP 30)</h2>
-        <button onclick="loadAndPlayTrack(0)" class="btn btn-primary" style="margin-top: 10px;">► 播放全部</button>
-      </div><div class="grid">`;
+/* ---------- 書架 ---------- */
+function renderLib(){
+  const k=$('q').value.toLowerCase(),list=books.filter(b=>b.title.toLowerCase().includes(k));
+  $('cnt').textContent=`共 ${list.length} 本`;
+  $('grid').innerHTML=list.map(b=>{const tp=Math.max(1,Math.ceil(b.lines.length/PAGE)),p=Math.min(100,Math.round(((b.page||0)+1)/tp*100));
+    return`<div class="card panel" data-id="${esc(b.id)}"><div class="cover" data-a="open" style="--g1:${b.g1||'#00f0ff'};--g2:${b.g2||'#6366f1'}"><span class="tag">${esc(b.format)}</span></div>
+    <div class="row"><div class="ttl" title="${esc(b.title)}">${esc(b.title)}</div><button class="mini" data-a="edit">✎</button></div>
+    <div class="bar"><i style="width:${p}%"></i></div><div class="row" style="justify-content:space-between"><span style="font-size:11px;color:var(--mu)">進度 ${p}%</span>
+    <span class="row"><button class="mini" data-a="open">閱讀</button><button class="mini del" data-a="del">刪除</button></span></div></div>`}).join('');
+}
+$('grid').addEventListener('click',async e=>{
+  const a=e.target.closest('[data-a]');if(!a)return;const card=a.closest('.card'),id=card.dataset.id,b=books.find(x=>x.id===id);if(!b)return;
+  if(a.dataset.a==='open')openBook(id,b.page||0);
+  else if(a.dataset.a==='edit'){const t=card.querySelector('.ttl');const i=document.createElement('input');i.type='text';i.value=b.title;i.id='te';t.replaceWith(i);i.focus();i.select();
+    i.addEventListener('keydown',ev=>{if(ev.key==='Enter')i.blur()});
+    i.addEventListener('blur',async()=>{const v=i.value.trim();if(v&&v!==b.title){b.title=s2t(v);await save(b);toast('書名已儲存')}renderLib()},{once:true})}
+  else if(a.dataset.a==='del'){if(!a.classList.contains('arm')){a.classList.add('arm');a.textContent='確定？';setTimeout(()=>{a.classList.remove('arm');a.textContent='刪除'},3000);return}
+    books=books.filter(x=>x.id!==id);stored.delete(id);await tx('readwrite',s=>s.delete(id));const m=lget(MK)||{};delete m[id];lset(MK,m);renderLib();toast('已刪除')}
+});
+$('q').addEventListener('input',renderLib);
 
-      state.playlist.forEach((track, idx) => {
-        const isCurrent = state.currentIndex === idx;
-        html += `
-          <div class="card glass-panel ${isCurrent ? 'card-active' : ''}">
-            <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
-              <span style="font-weight:bold; color:#6b7280; font-size:12px;">${idx+1}</span>
-              <img src="${track.cover}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">
-              <div class="truncate">
-                <div style="font-size:13px; font-weight:600; color:white;" class="truncate">${escapeHtml(track.title)}</div>
-                <div style="font-size:11px; color:#9ca3af;" class="truncate">${escapeHtml(track.artist)}</div>
-              </div>
-            </div>
-            <button onclick="loadAndPlayTrack(${idx})" class="btn btn-primary" style="padding:6px 10px;">${isCurrent && state.isPlaying ? '❚❚' : '►'}</button>
-          </div>
-        `;
-      });
-      html += `</div>`;
-      app.innerHTML = html;
-    }
+/* ---------- 閱讀器 ---------- */
+function openBook(id,p){
+  cur=books.find(b=>b.id===id);if(!cur)return;pg=p||0;
+  $('lib').classList.add('hide');$('rd').classList.remove('hide');$('home').classList.remove('hide');$('tocBtn').classList.remove('hide');
+  $('toc').innerHTML=(cur.chapters.length?cur.chapters.map(c=>`<button data-p="${Math.floor(c.i/PAGE)}">${esc(c.t)}</button>`).join(''):'<div style="color:var(--mu);font-size:13px">沒有偵測到章節</div>');
+  $('toc').classList.remove('open');render();
+}
+function render(){
+  const b=cur,tp=Math.max(1,Math.ceil(b.lines.length/PAGE));pg=Math.min(Math.max(pg,0),tp-1);b.page=pg;save(b);lset(LK,{id:b.id});
+  const el=$('content'),s=pg*PAGE;el.innerHTML='';
+  b.lines.slice(s,s+PAGE).forEach((t,i)=>{const k=pg+'-'+(s+i),d=document.createElement('div');d.className='ln'+(b.marks[k]?' mk':'');d.dataset.k=k;
+    if(/^#+\s/.test(t)){const n=Math.min(t.match(/^#+/)[0].length,3);d.innerHTML=`<h${n}>${esc(t.replace(/^#+\s*/,''))}</h${n}>`}
+    else if(t.startsWith('[IMG:')){const src=(b.images||{})[t.slice(5,-1)];if(!src)return;d.innerHTML=`<img class="im" loading="lazy" src="${esc(src)}" alt="">`}
+    else if(t.startsWith('[TBL]'))d.innerHTML='<div class="tw"><table><tr>'+t.slice(5).split('\t').map(c=>`<td>${esc(c)}</td>`).join('')+'</tr></table></div>';
+    else d.innerHTML=`<p>${esc(t)}</p>`;
+    el.appendChild(d)});
+  let ch='正文內容';for(const c of b.chapters){if(c.i<=s+PAGE-1)ch=c.t;else break}
+  $('chap').textContent=ch;$('pinfo').textContent=`${pg+1} / ${tp}`;$('pnum').textContent=`${pg+1} / ${tp}`;$('pct').textContent=`進度 ${Math.round((pg+1)/tp*100)}%`;
+  $('prev').disabled=pg===0;$('next').disabled=pg>=tp-1;$('scroll').scrollTop=0;
+}
+$('content').addEventListener('click',e=>{
+  if(e.target.classList.contains('im')){$('lbi').src=e.target.src;$('lb').classList.remove('hide');return}
+  const d=e.target.closest('.ln');if(!d)return;const k=d.dataset.k;
+  if(cur.marks[k]){delete cur.marks[k];d.classList.remove('mk')}else{cur.marks[k]=1;d.classList.add('mk')}
+  saveMeta(cur);
+});
+$('lb').onclick=()=>$('lb').classList.add('hide');
+$('prev').onclick=()=>{pg--;render()};$('next').onclick=()=>{pg++;render()};
+$('tocBtn').onclick=()=>$('toc').classList.toggle('open');
+$('toc').addEventListener('click',e=>{const b=e.target.closest('button[data-p]');if(b){pg=+b.dataset.p;render();$('toc').classList.remove('open')}});
+$('home').onclick=()=>{cur=null;lset(LK,null);$('rd').classList.add('hide');$('home').classList.add('hide');$('tocBtn').classList.add('hide');$('lib').classList.remove('hide');renderLib()};
+document.addEventListener('keydown',e=>{if(!cur||e.target.tagName==='INPUT')return;if(e.key==='ArrowRight'){pg++;render()}if(e.key==='ArrowLeft'){pg--;render()}});
 
-    function renderMyTab() {
-      const app = document.getElementById('app-content');
-      let html = `
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 18px; font-weight: bold; color: white; margin-bottom: 10px;">❤ 我的收藏 (${state.favorites.length})</h2>
-        </div><div class="grid">`;
+/* ---------- 匯入入口 ---------- */
+async function importMany(fs){for(const f of fs)await importFile(f)}
+$('file').addEventListener('change',e=>{importMany([...e.target.files]);e.target.value=''});
+$('drop').onclick=()=>$('file').click();
+['dragover','dragenter'].forEach(n=>document.addEventListener(n,e=>{e.preventDefault();$('drop').classList.add('over')}));
+['dragleave','drop'].forEach(n=>document.addEventListener(n,e=>{e.preventDefault();$('drop').classList.remove('over');if(n==='drop'&&e.dataTransfer.files.length)importMany([...e.dataTransfer.files])}));
 
-      if(state.favorites.length === 0) {
-        html += `<p style="color:#6b7280; font-size:13px;">目前尚無收藏聲音檔</p>`;
-      } else {
-        state.favorites.forEach((track, idx) => {
-          html += `
-            <div class="card glass-panel">
-              <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
-                <img src="${track.cover}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">
-                <div class="truncate">
-                  <div style="font-size:13px; font-weight:600; color:white;" class="truncate">${escapeHtml(track.title)}</div>
-                  <div style="font-size:11px; color:#9ca3af;" class="truncate">${escapeHtml(track.artist)}</div>
-                </div>
-              </div>
-              <button onclick="playFav(${idx})" class="btn btn-primary" style="padding:6px 10px;">►</button>
-            </div>
-          `;
-        });
-      }
-      html += `</div>`;
-      app.innerHTML = html;
-    }
-
-    function loadAndPlayTrack(idx) {
-      if(idx < 0 || idx >= state.playlist.length) return;
-      state.currentIndex = idx;
-      const track = state.playlist[idx];
-
-      document.getElementById('mini-title').innerText = track.title;
-      document.getElementById('mini-artist').innerText = track.artist;
-      document.getElementById('mini-cover').src = track.cover;
-
-      document.getElementById('full-title').innerText = track.title;
-      document.getElementById('full-artist').innerText = track.artist;
-      document.getElementById('full-cover').src = track.cover;
-
-      // 解析真實 YouTube ID
-      const realYtId = track.id.split('_pad')[0];
-
-      if (state.ytReady && state.ytPlayer) {
-        state.ytPlayer.loadVideoById(realYtId);
-        state.isPlaying = true;
-        updateUIButtons(true);
-      } else {
-        alert('播放器正在初始化中，請稍微重試...');
-      }
-
-      if (state.currentTab !== 'my') renderCategoryTab(state.currentTab);
-    }
-
-    function togglePlayPause() {
-      if(state.currentIndex === -1 && state.playlist.length > 0) {
-        loadAndPlayTrack(0);
-        return;
-      }
-      if(!state.ytReady || !state.ytPlayer) return;
-
-      if(state.isPlaying) {
-        state.ytPlayer.pauseVideo();
-      } else {
-        state.ytPlayer.playVideo();
-      }
-    }
-
-    function updateUIButtons(playing) {
-      const btnText = playing ? '❚❚' : '►';
-      document.getElementById('mini-play-btn').innerText = btnText;
-      document.getElementById('full-play-btn').innerText = btnText;
-    }
-
-    function startProgressTimer() {
-      stopProgressTimer();
-      state.progressTimer = setInterval(() => {
-        if(state.ytPlayer && state.ytPlayer.getCurrentTime) {
-          const curr = state.ytPlayer.getCurrentTime() || 0;
-          const dur = state.ytPlayer.getDuration() || 0;
-          if(dur > 0) {
-            document.getElementById('seek-bar').value = (curr / dur) * 100;
-            document.getElementById('curr-time').innerText = formatTime(curr);
-            document.getElementById('total-time').innerText = formatTime(dur);
-          }
-        }
-      }, 1000);
-    }
-
-    function stopProgressTimer() {
-      if(state.progressTimer) clearInterval(state.progressTimer);
-    }
-
-    function onSeek(val) {
-      if(state.ytPlayer && state.ytPlayer.getDuration) {
-        const dur = state.ytPlayer.getDuration();
-        state.ytPlayer.seekTo((val / 100) * dur, true);
-      }
-    }
-
-    function formatTime(sec) {
-      const m = Math.floor(sec / 60);
-      const s = Math.floor(sec % 60);
-      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-    }
-
-    function playNext() { loadAndPlayTrack((state.currentIndex + 1) % state.playlist.length); }
-    function playPrev() { loadAndPlayTrack((state.currentIndex - 1 + state.playlist.length) % state.playlist.length); }
-
-    function expandFullPlayer() { document.getElementById('full-player-modal').classList.remove('hidden'); }
-    function closeFullPlayer() { document.getElementById('full-player-modal').classList.add('hidden'); }
-
-    function openApiKeyModal() { document.getElementById('api-modal').classList.remove('hidden'); }
-    function closeApiKeyModal() { document.getElementById('api-modal').classList.add('hidden'); }
-    function saveApiKey() {
-      localStorage.setItem(CONFIG.API_KEY_STORAGE, document.getElementById('api-key-input').value.trim());
-      closeApiKeyModal();
-    }
-
-    function escapeHtml(str) { return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-    window.onload = () => { switchTab('mandarin'); };
-  </script>
-</body>
-</html>
-
+/* ---------- 啟動 ---------- */
+const SAMPLE={id:'sample-book-cyberpunk',title:'銀翼終端：2088 賽博新紀元',format:'EPUB',g1:'#00f0ff',g2:'#2563eb',page:0,marks:{},images:{},raw:`# 第一章：霓虹雨夜
+夜幕籠罩著新臺北城，高聳入雲的摩天大樓外牆上，龐大的立體全息廣告正播放著最新款神經接頭的宣傳片。
+微雨綿綿，霓虹燈影在濕漉的巷弄地面上映照出斑駁的彩色波紋。
+陸修緊了緊身上的高領風衣，調整了一下左眼的光學掃描單鏡。
+「目標就在前面，」他在內部通訊頻道中低語，「生化晶片的訊號很微弱，隨時可能被覆蓋。」
+# 第二章：暗巷追擊
+黑暗中傳來機械齒輪急促旋轉的喀噠聲。
+一個矮小的身影迅速穿過水窪，消失在東區的垃圾處理管道口。
+# 第三章：意識上傳
+在第 42 區的地下診所裡，空氣中瀰漫著冷卻液與臭氧的混合氣味。
+「這不是普通的記憶卡，」林克沉聲道，「這裡面儲存著完整的個人意識份額。」`};
+(async()=>{
+  await openDB();
+  try{books=(await tx('readonly',s=>s.getAll()))||[]}catch(e){books=[]}
+  books.forEach(b=>stored.add(b.id));
+  if(!books.length){books=[SAMPLE];await save(SAMPLE)}
+  const m=lget(MK)||{};
+  books.forEach(b=>{const x=m[b.id];if(x){b.title=x.title||b.title;b.page=x.page||0;b.marks=x.marks||{}}b.marks=b.marks||{};b.images=b.images||{};parseLines(b)});
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+  renderLib();
+  const l=lget(LK);if(l&&l.id&&books.find(b=>b.id===l.id)){openBook(l.id,books.find(b=>b.id===l.id).page||0);toast('已還原上次閱讀進度')}
+})();
+</script>
+</body></html>
